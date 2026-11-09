@@ -1,0 +1,42 @@
+name = "bacevector-query"
+main = "dist/index.mjs"
+compatibility_date = "2024-10-01"
+
+# Vectorize binding
+[[vectorize]]
+binding = "VECTORIZE_INDEX"
+index_name = "bacevector-vectors"
+
+# Workers AI binding
+[ai]
+binding = "AI"
+
+# D1 Database binding for metadata queries
+[[d1_databases]]
+binding = "DB"
+database_name = "bacevector-db"
+database_id = "27c29996-b885-4f56-9d09-85b3c78adc3f"
+
+# Environment variables
+[vars]
+MAX_RESULTS = "10"
+TEMPERATURE = "0.7"
+ADMIN_WORKER_URL = "https://bacevector-admin.laurensmith2179.workers.dev"
+
+[build]
+command = "npm run build"
+
+[dev]
+port = 8788
+
+[observability]
+enabled = true
+
+[env.production]
+name = "bacevector-query-prod"
+vars = { ADMIN_WORKER_URL = "https://admin.bacevector.workers.dev" }
+
+[env.staging]
+name = "bacevector-query-staging"
+vars = { ADMIN_WORKER_URL = "https://admin-staging.bacevector.workers.dev" }
+

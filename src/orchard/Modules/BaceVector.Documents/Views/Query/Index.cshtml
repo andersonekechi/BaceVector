@@ -1,0 +1,216 @@
+@using BaceVector.Documents.Models
+@{
+    var usage = ViewData["Usage"] as TenantUsage;
+}
+
+<div class="container-fluid py-4">
+    <div class="row">
+        <div class="col-md-12">
+            <h1>Ask Questions</h1>
+            <p class="text-muted">Search your documents using natural language queries.</p>
+        </div>
+    </div>
+
+    @if (usage != null && usage.Usage.QueryCount >= usage.Limits.Queries)
+    {
+        <div class="alert alert-warning">
+            <i class="bi bi-exclamation-triangle"></i>
+            You've reached your monthly query limit (@usage.Limits.Queries queries). 
+            Additional queries will incur overage charges of $0.01 per query.
+        </div>
+    }
+
+    <div class="row">
+        <div class="col-md-8">
+            <div class="card mb-4">
+                <div class="card-body">
+                    <div class="mb-3">
+                        <label for="questionInput" class="form-label">Your Question</label>
+                        <textarea class="form-control" id="questionInput" rows="3" 
+                                  placeholder="e.g., What is our vacation policy?"></textarea>
+                    </div>
+                    <button type="button" class="btn btn-primary" id="askButton">
+                        <i class="bi bi-search"></i> Ask Question
+                    </button>
+                    <button type="button" class="btn btn-secondary" id="clearButton">
+                        <i class="bi bi-x-circle"></i> Clear Conversation
+                    </button>
+                </div>
+            </div>
+
+            <!-- Conversation History -->
+            <div id="conversationContainer"></div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5>Usage This Month</h5>
+                </div>
+                <div class="card-body">
+                    @if (usage != null)
+                    {
+                        <div class="mb-3">
+                            <h6 class="text-muted">Queries</h6>
+                            <h4>@usage.Usage.QueryCount / @usage.Limits.Queries</h4>
+                            <div class="progress" style="height: 8px;">
+                                <div class="progress-bar" role="progressbar" 
+                                     style="width: @((usage.Usage.QueryCount * 100.0 / usage.Limits.Queries))%"></div>
+                            </div>
+                        </div>
+                        @if (usage.Usage.OverageQueries > 0)
+                        {
+                            <div class="alert alert-info mb-0">
+                                <strong>Overage:</strong> @usage.Usage.OverageQueries queries<br/>
+                                <strong>Charges:</strong> $@usage.Usage.OverageCharges.ToString("F2")
+                            </div>
+                        }
+                    }
+                </div>
+            </div>
+
+            <div class="card mt-3">
+                <div class="card-header">
+                    <h5>Example Questions</h5>
+                </div>
+                <div class="card-body">
+                    <ul class="list-unstyled">
+                        <li class="mb-2">
+                            <a href="#" class="example-question">What is the onboarding process?</a>
+                        </li>
+                        <li class="mb-2">
+                            <a href="#" class="example-question">How do I request time off?</a>
+                        </li>
+                        <li class="mb-2">
+                            <a href="#" class="example-question">What are the company values?</a>
+                        </li>
+                        <li class="mb-2">
+                            <a href="#" class="example-question">Where can I find technical documentation?</a>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    let conversationHistory = [];
+
+    document.getElementById('askButton').addEventListener('click', askQuestion);
+    document.getElementById('clearButton').addEventListener('click', clearConversation);
+    document.getElementById('questionInput').addEventListener('keypress', function(e) {
+        if (e.key === 'Enter' && !e.shiftKey) {
+            e.preventDefault();
+            askQuestion();
+        }
+    });
+
+    document.querySelectorAll('.example-question').forEach(link => {
+        link.addEventListener('click', function(e) {
+            e.preventDefault();
+            document.getElementById('questionInput').value = this.textContent;
+            askQuestion();
+        });
+    });
+
+    async function askQuestion() {
+        const questionInput = document.getElementById('questionInput');
+        const question = questionInput.value.trim();
+
+        if (!question) {
+            alert('Please enter a question.');
+            return;
+        }
+
+        const askButton = document.getElementById('askButton');
+        askButton.disabled = true;
+        askButton.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Thinking...';
+
+        // Add user question to UI
+        addMessageToUI('user', question);
+        questionInput.value = '';
+
+        try {
+            const response = await fetch('@Url.Action("Ask")', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]').value
+                },
+                body: JSON.stringify({
+                    question: question,
+                    history: conversationHistory
+                })
+            });
+
+            const data = await response.json();
+
+            if (response.ok) {
+                // Add assistant answer to UI
+                addMessageToUI('assistant', data.answer, data.sources);
+
+                // Update conversation history
+                conversationHistory.push({ role: 'user', content: question });
+                conversationHistory.push({ role: 'assistant', content: data.answer });
+
+                if (data.isOverage) {
+                    showOverageWarning();
+                }
+            } else {
+                addMessageToUI('error', data.error || 'An error occurred.');
+            }
+        } catch (error) {
+            addMessageToUI('error', 'Failed to connect to the server.');
+        } finally {
+            askButton.disabled = false;
+            askButton.innerHTML = '<i class="bi bi-search"></i> Ask Question';
+        }
+    }
+
+    function addMessageToUI(role, content, sources = null) {
+        const container = document.getElementById('conversationContainer');
+        const messageDiv = document.createElement('div');
+        messageDiv.className = `card mb-3 ${role === 'user' ? 'bg-light' : ''}`;
+
+        let html = `
+            <div class="card-body">
+                <h6 class="text-muted">${role === 'user' ? 'You' : 'Assistant'}</h6>
+                <p>${escapeHtml(content)}</p>
+        `;
+
+        if (sources && sources.length > 0) {
+            html += '<hr/><h6 class="text-muted">Sources:</h6><ul class="small">';
+            sources.forEach((source, idx) => {
+                html += `<li><strong>[${idx + 1}]</strong> ${escapeHtml(source.chunk.substring(0, 100))}... (Score: ${source.score.toFixed(2)})</li>`;
+            });
+            html += '</ul>';
+        }
+
+        html += '</div>';
+        messageDiv.innerHTML = html;
+        container.appendChild(messageDiv);
+        messageDiv.scrollIntoView({ behavior: 'smooth' });
+    }
+
+    function clearConversation() {
+        conversationHistory = [];
+        document.getElementById('conversationContainer').innerHTML = '';
+        document.getElementById('questionInput').value = '';
+    }
+
+    function showOverageWarning() {
+        // Could show a toast or modal
+        console.log('Overage query detected');
+    }
+
+    function escapeHtml(text) {
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    }
+</script>
+
+@Html.AntiForgeryToken()
+
+

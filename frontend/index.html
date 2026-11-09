@@ -1,0 +1,805 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BaceVector - Document Q&A</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 40px;
+        }
+        
+        .header h1 {
+            font-size: 3em;
+            margin-bottom: 10px;
+        }
+        
+        .header p {
+            font-size: 1.2em;
+            opacity: 0.9;
+        }
+        
+        .card {
+            background: white;
+            border-radius: 12px;
+            padding: 30px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        
+        .upload-section {
+            border: 3px dashed #667eea;
+            border-radius: 8px;
+            padding: 40px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .upload-section:hover {
+            background: #f8f9ff;
+            border-color: #764ba2;
+        }
+        
+        .upload-section.dragover {
+            background: #f0f4ff;
+            border-color: #667eea;
+        }
+        
+        input[type="file"] {
+            display: none;
+        }
+        
+        .btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 6px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+        
+        .btn:hover {
+            transform: translateY(-2px);
+        }
+        
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        
+        .query-section {
+            margin-top: 20px;
+        }
+        
+        textarea {
+            width: 100%;
+            padding: 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 16px;
+            resize: vertical;
+            min-height: 100px;
+            font-family: inherit;
+        }
+        
+        textarea:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        
+        .conversation {
+            margin-top: 20px;
+            max-height: 500px;
+            overflow-y: auto;
+        }
+        
+        .message {
+            padding: 15px;
+            margin-bottom: 15px;
+            border-radius: 8px;
+        }
+        
+        .message.user {
+            background: #e3f2fd;
+            margin-left: 20%;
+        }
+        
+        .message.assistant {
+            background: #f5f5f5;
+            margin-right: 20%;
+        }
+        
+        .message.error {
+            background: #ffebee;
+            color: #c62828;
+        }
+        
+        .message strong {
+            display: block;
+            margin-bottom: 5px;
+            color: #667eea;
+        }
+        
+        .sources {
+            margin-top: 10px;
+            padding: 10px;
+            background: white;
+            border-radius: 4px;
+            font-size: 0.9em;
+        }
+        
+        .source-item {
+            margin: 5px 0;
+            padding: 5px;
+            background: #f9f9f9;
+            border-left: 3px solid #667eea;
+            padding-left: 10px;
+        }
+        
+        .status {
+            padding: 10px;
+            border-radius: 6px;
+            margin-bottom: 15px;
+            display: none;
+        }
+        
+        .status.success {
+            background: #e8f5e9;
+            color: #2e7d32;
+            display: block;
+        }
+        
+        .status.error {
+            background: #ffebee;
+            color: #c62828;
+            display: block;
+        }
+        
+        .status.info {
+            background: #e3f2fd;
+            color: #1565c0;
+            display: block;
+        }
+        
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        /* Auth styles */
+        .auth-container {
+            max-width: 400px;
+            margin: 50px auto;
+            padding: 30px;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+        }
+
+        .auth-container h2 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 20px;
+        }
+
+        .auth-form {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .auth-form input {
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 6px;
+            font-size: 16px;
+        }
+
+        .auth-form input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .auth-btn {
+            padding: 12px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        .auth-btn:hover {
+            transform: translateY(-2px);
+        }
+
+        .auth-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .user-info {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: white;
+            padding: 10px 15px;
+            border-radius: 6px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            font-size: 14px;
+        }
+
+        .logout-btn {
+            background: #dc3545;
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+            margin-left: 10px;
+        }
+
+        .main-app {
+            display: none;
+        }
+
+        .main-app.authenticated {
+            display: block !important;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .example-questions {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 10px;
+            margin-top: 15px;
+        }
+        
+        .example-btn {
+            background: #f5f5f5;
+            border: 1px solid #e0e0e0;
+            padding: 10px;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-align: left;
+        }
+        
+        .example-btn:hover {
+            background: #e3f2fd;
+            border-color: #667eea;
+        }
+    </style>
+</head>
+<body>
+    <!-- Authentication Screen -->
+    <div id="authScreen" class="auth-container">
+        <h2 id="authTitle">🔐 Login to BaceVector</h2>
+        
+        <!-- Login Form -->
+        <form id="loginForm" class="auth-form" onsubmit="handleLogin(event)">
+            <input type="email" id="loginEmail" placeholder="Email" value="test@example.com" required>
+            <input type="password" id="loginPassword" placeholder="Password" value="testpass123" required>
+            <button type="submit" class="auth-btn" id="loginBtn">Login</button>
+            <p style="text-align: center; margin-top: 10px; font-size: 14px;">
+                Don't have an account? <a href="#" onclick="toggleAuthMode(event)">Sign Up</a>
+            </p>
+        </form>
+
+        <!-- Signup Form (Hidden by default) -->
+        <form id="signupForm" class="auth-form" onsubmit="handleSignup(event)" style="display: none;">
+            <input type="email" id="signupEmail" placeholder="Email" required>
+            <input type="password" id="signupPassword" placeholder="Password" required>
+            <input type="password" id="signupConfirmPassword" placeholder="Confirm Password" required>
+            <button type="submit" class="auth-btn" id="signupBtn">Sign Up</button>
+            <p style="text-align: center; margin-top: 10px; font-size: 14px;">
+                Already have an account? <a href="#" onclick="toggleAuthMode(event)">Login</a>
+            </p>
+        </form>
+
+        <div id="authMessage" style="margin-top: 15px; text-align: center;"></div>
+    </div>
+
+    <!-- Main Application (hidden until authenticated) -->
+    <div id="mainApp" class="container main-app">
+        <div class="user-info" id="userInfo" style="display: none;">
+            <span id="userEmail"></span>
+            <button class="logout-btn" onclick="logout()">Logout</button>
+        </div>
+
+        <div class="header">
+            <h1>📄 BaceVector</h1>
+            <p>Upload documents and ask questions - AI will answer based on your content</p>
+        </div>
+        
+        <div class="card">
+            <h2>📤 Upload Document</h2>
+            <div id="status" class="status"></div>
+            
+            <div class="upload-section" id="dropZone">
+                <input type="file" id="fileInput" accept=".txt,.pdf,.doc,.docx,.md">
+                <p style="font-size: 1.2em; margin-bottom: 10px;">📁 Drop your document here or click to browse</p>
+                <p style="color: #666;">Supported: TXT, PDF, DOC, DOCX, Markdown</p>
+                <button class="btn" onclick="document.getElementById('fileInput').click()">Choose File</button>
+            </div>
+            
+            <div id="uploadedDocs" style="margin-top: 20px;"></div>
+        </div>
+        
+        <div class="card">
+            <h2>💬 Ask Questions</h2>
+            
+            <div class="example-questions">
+                <button class="example-btn" onclick="askQuestion('What is this document about?')">
+                    What is this document about?
+                </button>
+                <button class="example-btn" onclick="askQuestion('What are the main points?')">
+                    What are the main points?
+                </button>
+                <button class="example-btn" onclick="askQuestion('Summarize the key information')">
+                    Summarize the key information
+                </button>
+                <button class="example-btn" onclick="askQuestion('Are there any numbers or statistics?')">
+                    Any numbers or statistics?
+                </button>
+            </div>
+            
+            <div class="query-section">
+                <textarea id="questionInput" placeholder="Type your question here..."></textarea>
+                <button class="btn" onclick="askQuestion()" style="margin-top: 10px;">
+                    Ask Question
+                </button>
+            </div>
+            
+            <div id="conversation" class="conversation"></div>
+        </div>
+    </div>
+    
+    <script>
+        // Configuration - UPDATE THESE WITH YOUR WORKER URLS
+        const CONFIG = {
+            ingestionUrl: 'https://bacevector-ingestion.laurensmith2179.workers.dev',
+            queryUrl: 'https://bacevector-query.laurensmith2179.workers.dev',
+            adminUrl: 'https://bacevector-admin.laurensmith2179.workers.dev',
+            tenantId: 'test-tenant',
+            corsProxy: 'https://cors-anywhere.herokuapp.com/' // CORS proxy for development
+        };
+
+        // Helper function to make API calls with CORS handling
+        async function apiCall(url, options = {}) {
+            try {
+                // Don't set Content-Type for FormData (let browser set it)
+                const headers = options.body instanceof FormData
+                    ? options.headers || {}
+                    : { 'Content-Type': 'application/json', ...options.headers };
+
+                const response = await fetch(url, {
+                    ...options,
+                    headers: headers
+                });
+                return response;
+            } catch (error) {
+                // If CORS error, try with proxy (for development)
+                if (error.message.includes('CORS') || error.message.includes('Failed to fetch')) {
+                    console.log('CORS error detected, trying with proxy...');
+                    try {
+                        const proxyUrl = CONFIG.corsProxy + url;
+                        const headers = options.body instanceof FormData
+                            ? { 'X-Requested-With': 'XMLHttpRequest', ...options.headers }
+                            : { 'X-Requested-With': 'XMLHttpRequest', 'Content-Type': 'application/json', ...options.headers };
+
+                        const response = await fetch(proxyUrl, {
+                            ...options,
+                            headers: headers
+                        });
+                        return response;
+                    } catch (proxyError) {
+                        console.error('Proxy also failed:', proxyError);
+                        throw error; // Throw original error
+                    }
+                }
+                throw error;
+            }
+        }
+
+        // Authentication state
+        let sessionToken = localStorage.getItem('bacevector_session');
+        let currentUser = null;
+
+        // Check if user is already logged in
+        async function checkAuth() {
+            if (!sessionToken) {
+                showAuthScreen();
+                return;
+            }
+
+            try {
+                const response = await apiCall(`${CONFIG.ingestionUrl}/me`, {
+                    headers: {
+                        'Authorization': `Bearer ${sessionToken}`
+                    }
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    currentUser = data.user;
+                    showMainApp();
+                } else {
+                    // Token expired or invalid
+                    localStorage.removeItem('bacevector_session');
+                    sessionToken = null;
+                    showAuthScreen();
+                }
+            } catch (error) {
+                console.error('Auth check failed:', error);
+                showAuthScreen();
+            }
+        }
+
+        function showAuthScreen() {
+            document.getElementById('authScreen').style.display = 'block';
+            document.getElementById('mainApp').style.display = 'none';
+        }
+
+        function showMainApp() {
+            console.log("Showing main app for user:", currentUser);
+            document.getElementById('authScreen').style.display = 'none';
+            
+            const mainApp = document.getElementById('mainApp');
+            mainApp.style.display = 'block';
+            // Force display just in case class switching fails
+            mainApp.classList.add('authenticated');
+            
+            document.getElementById('userEmail').textContent = currentUser.email;
+            document.getElementById('userInfo').style.display = 'block';
+            
+            // Load previously uploaded documents if any
+            // loadUserDocuments(); 
+        }
+
+        function toggleAuthMode(event) {
+            event.preventDefault();
+            const loginForm = document.getElementById('loginForm');
+            const signupForm = document.getElementById('signupForm');
+            const authTitle = document.getElementById('authTitle');
+            const authMessage = document.getElementById('authMessage');
+            
+            authMessage.textContent = '';
+            
+            if (loginForm.style.display === 'none') {
+                // Show Login
+                loginForm.style.display = 'flex';
+                signupForm.style.display = 'none';
+                authTitle.textContent = '🔐 Login to BaceVector';
+            } else {
+                // Show Signup
+                loginForm.style.display = 'none';
+                signupForm.style.display = 'flex';
+                authTitle.textContent = '📝 Create Account';
+            }
+        }
+
+        async function handleSignup(event) {
+            event.preventDefault();
+
+            const email = document.getElementById('signupEmail').value;
+            const password = document.getElementById('signupPassword').value;
+            const confirmPassword = document.getElementById('signupConfirmPassword').value;
+            const signupBtn = document.getElementById('signupBtn');
+            const authMessage = document.getElementById('authMessage');
+
+            if (password !== confirmPassword) {
+                authMessage.textContent = 'Passwords do not match';
+                authMessage.style.color = 'red';
+                return;
+            }
+
+            signupBtn.disabled = true;
+            signupBtn.textContent = 'Creating Account...';
+            authMessage.textContent = '';
+
+            try {
+                const response = await apiCall(`${CONFIG.ingestionUrl}/signup`, {
+                    method: 'POST',
+                    body: JSON.stringify({ email, password })
+                });
+
+                const result = await response.json();
+
+                if (response.ok) {
+                    authMessage.textContent = '✅ Account created! Logging you in...';
+                    authMessage.style.color = 'green';
+                    
+                    // Auto-login after signup
+                    await performLogin(email, password);
+                } else {
+                    authMessage.textContent = result.error || 'Signup failed';
+                    authMessage.style.color = 'red';
+                    signupBtn.disabled = false;
+                    signupBtn.textContent = 'Sign Up';
+                }
+            } catch (error) {
+                authMessage.textContent = `Error: ${error.message}`;
+                authMessage.style.color = 'red';
+                signupBtn.disabled = false;
+                signupBtn.textContent = 'Sign Up';
+            }
+        }
+
+        async function performLogin(email, password) {
+            const authMessage = document.getElementById('authMessage');
+            
+            try {
+                const response = await apiCall(`${CONFIG.ingestionUrl}/login`, {
+                    method: 'POST',
+                    body: JSON.stringify({ email, password })
+                });
+
+                const result = await response.json();
+
+                if (response.ok && result.sessionToken) {
+                    sessionToken = result.sessionToken;
+                    currentUser = result.user;
+                    localStorage.setItem('bacevector_session', sessionToken);
+                    showMainApp();
+                } else {
+                    authMessage.textContent = result.error || 'Login failed';
+                    authMessage.style.color = 'red';
+                }
+            } catch (error) {
+                authMessage.textContent = `Error: ${error.message}`;
+                authMessage.style.color = 'red';
+            }
+        }
+
+        async function handleLogin(event) {
+            event.preventDefault();
+
+            const email = document.getElementById('loginEmail').value;
+            const password = document.getElementById('loginPassword').value;
+            const loginBtn = document.getElementById('loginBtn');
+            const authMessage = document.getElementById('authMessage');
+
+            loginBtn.disabled = true;
+            loginBtn.textContent = 'Logging in...';
+            authMessage.textContent = '';
+
+            try {
+                await performLogin(email, password);
+            } finally {
+                loginBtn.disabled = false;
+                loginBtn.textContent = 'Login';
+            }
+        }
+
+        function logout() {
+            localStorage.removeItem('bacevector_session');
+            sessionToken = null;
+            currentUser = null;
+            showAuthScreen();
+        }
+
+        // Initialize app
+        document.addEventListener('DOMContentLoaded', checkAuth);
+        
+        // File upload handling
+        const dropZone = document.getElementById('dropZone');
+        const fileInput = document.getElementById('fileInput');
+        
+        dropZone.addEventListener('click', () => fileInput.click());
+        
+        dropZone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            dropZone.classList.add('dragover');
+        });
+        
+        dropZone.addEventListener('dragleave', () => {
+            dropZone.classList.remove('dragover');
+        });
+        
+        dropZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dropZone.classList.remove('dragover');
+            const files = e.dataTransfer.files;
+            if (files.length > 0) {
+                handleFile(files[0]);
+            }
+        });
+        
+        fileInput.addEventListener('change', (e) => {
+            if (e.target.files.length > 0) {
+                handleFile(e.target.files[0]);
+            }
+        });
+        
+        async function handleFile(file) {
+            showStatus('Uploading and processing document...', 'info');
+            
+            try {
+                // Create form data with file
+                const formData = new FormData();
+                formData.append('file', file);
+                formData.append('tenantId', CONFIG.tenantId);
+                
+                console.log('Uploading to:', `${CONFIG.ingestionUrl}/upload`);
+                console.log('File:', file.name, file.type, file.size);
+                
+                // Upload to worker
+                const response = await apiCall(`${CONFIG.ingestionUrl}/upload`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${sessionToken}`
+                    },
+                    body: formData
+                });
+                
+                console.log('Response status:', response.status);
+                console.log('Response headers:', [...response.headers.entries()]);
+                
+                const responseText = await response.text();
+                console.log('Response body:', responseText);
+                
+                const result = JSON.parse(responseText);
+                
+                if (result.status === 'completed') {
+                    showStatus(`✅ Document "${file.name}" processed successfully! ${result.chunkCount} chunks indexed.`, 'success');
+                    addUploadedDoc(file.name, result.documentId, result.chunkCount);
+                } else {
+                    showStatus(`❌ Upload failed: ${result.error || result.details || 'Unknown error'}`, 'error');
+                    console.error('Upload failed:', result);
+                }
+            } catch (error) {
+                console.error('Full error:', error);
+                showStatus(`❌ Error: ${error.message}. Check browser console (F12) for details.`, 'error');
+            }
+        }
+        
+        function addUploadedDoc(filename, docId, chunkCount) {
+            const docsDiv = document.getElementById('uploadedDocs');
+            const docEl = document.createElement('div');
+            docEl.style.cssText = 'padding: 10px; background: #e8f5e9; border-radius: 6px; margin-top: 10px;';
+            docEl.innerHTML = `
+                <strong>✓ ${filename}</strong><br>
+                <small>Document ID: ${docId} | ${chunkCount} chunks</small>
+            `;
+            docsDiv.appendChild(docEl);
+        }
+        
+        function showStatus(message, type) {
+            const status = document.getElementById('status');
+            status.textContent = message;
+            status.className = `status ${type}`;
+            
+            if (type === 'success') {
+                setTimeout(() => {
+                    status.style.display = 'none';
+                }, 5000);
+            }
+        }
+        
+        async function askQuestion(predefinedQuestion) {
+            const questionInput = document.getElementById('questionInput');
+            const question = predefinedQuestion || questionInput.value.trim();
+            
+            if (!question) {
+                alert('Please enter a question');
+                return;
+            }
+            
+            // Add user message
+            addMessage('user', question);
+            questionInput.value = '';
+            
+            // Show loading
+            const loadingId = addMessage('assistant', '<div class="loading"></div> Thinking...');
+            
+            try {
+                const response = await apiCall(`${CONFIG.queryUrl}/query`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${sessionToken}`
+                    },
+                    body: JSON.stringify({
+                        tenantId: CONFIG.tenantId,
+                        question: question
+                    })
+                });
+                
+                const result = await response.json();
+                
+                // Remove loading message
+                document.getElementById(loadingId).remove();
+                
+                if (result.answer) {
+                    let answerHtml = result.answer;
+                    
+                    if (result.sources && result.sources.length > 0) {
+                        answerHtml += '<div class="sources"><strong>📚 Sources:</strong>';
+                        result.sources.forEach((source, idx) => {
+                            answerHtml += `
+                                <div class="source-item">
+                                    <strong>[${idx + 1}]</strong> ${source.chunk.substring(0, 150)}...
+                                    <br><small>Score: ${source.score.toFixed(2)}</small>
+                                </div>
+                            `;
+                        });
+                        answerHtml += '</div>';
+                    }
+                    
+                    addMessage('assistant', answerHtml);
+                } else {
+                    addMessage('error', result.error || 'Failed to get answer');
+                }
+            } catch (error) {
+                document.getElementById(loadingId).remove();
+                addMessage('error', `Error: ${error.message}`);
+            }
+        }
+        
+        function addMessage(type, content) {
+            const conversation = document.getElementById('conversation');
+            const messageId = `msg_${Date.now()}`;
+            const message = document.createElement('div');
+            message.id = messageId;
+            message.className = `message ${type}`;
+            
+            if (type === 'user') {
+                message.innerHTML = `<strong>You:</strong>${content}`;
+            } else if (type === 'assistant') {
+                message.innerHTML = `<strong>AI Assistant:</strong>${content}`;
+            } else {
+                message.innerHTML = content;
+            }
+            
+            conversation.appendChild(message);
+            message.scrollIntoView({ behavior: 'smooth' });
+            
+            return messageId;
+        }
+        
+        // Allow Enter to send (Shift+Enter for new line)
+        document.getElementById('questionInput').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                askQuestion();
+            }
+        });
+    </script>
+</body>
+</html>
+

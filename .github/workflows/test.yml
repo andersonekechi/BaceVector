@@ -1,0 +1,81 @@
+name: Test
+
+on:
+  pull_request:
+    branches:
+      - main
+      - staging
+  push:
+    branches:
+      - main
+      - staging
+
+jobs:
+  lint-workers:
+    name: Lint Workers
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        worker: [ingestion, query, admin]
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      
+      - name: Install dependencies
+        working-directory: src/workers/${{ matrix.worker }}
+        run: npm ci
+      
+      - name: Type check
+        working-directory: src/workers/${{ matrix.worker }}
+        run: npx tsc --noEmit
+
+  test-workers:
+    name: Test Workers
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      
+      - name: Install dependencies (ingestion)
+        working-directory: src/workers/ingestion
+        run: npm ci
+      
+      - name: Install dependencies (query)
+        working-directory: src/workers/query
+        run: npm ci
+      
+      - name: Install dependencies (admin)
+        working-directory: src/workers/admin
+        run: npm ci
+      
+      # Add actual tests when test files are created
+      # - name: Run tests
+      #   run: npm test
+
+  validate-schema:
+    name: Validate Database Schema
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Setup SQLite
+        run: sudo apt-get update && sudo apt-get install -y sqlite3
+      
+      - name: Validate schema.sql
+        run: |
+          sqlite3 test.db < database/schema.sql
+          sqlite3 test.db "SELECT name FROM sqlite_master WHERE type='table';"
+      
+      - name: Validate seed.sql
+        run: |
+          sqlite3 test.db < database/seed.sql
+          sqlite3 test.db "SELECT COUNT(*) FROM tenants;"
+

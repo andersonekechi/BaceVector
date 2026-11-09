@@ -1,0 +1,170 @@
+@using BaceVector.Documents.Models
+@{
+    var documents = ViewData["Documents"] as IEnumerable<DocumentInfo>;
+    var usage = ViewData["Usage"] as TenantUsage;
+}
+
+<div class="container-fluid py-4">
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <h1>Document Library</h1>
+                <a href="@Url.Action("Upload")" class="btn btn-primary">
+                    <i class="bi bi-upload"></i> Upload Document
+                </a>
+            </div>
+        </div>
+    </div>
+
+    @if (TempData["Message"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            @TempData["Message"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+
+    @if (TempData["Error"] != null)
+    {
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            @TempData["Error"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+
+    <!-- Usage Stats -->
+    @if (usage != null)
+    {
+        <div class="row mb-4">
+            <div class="col-md-3">
+                <div class="card">
+                    <div class="card-body">
+                        <h6 class="text-muted">Documents</h6>
+                        <h3>@usage.Usage.DocumentCount / @usage.Limits.Documents</h3>
+                        <div class="progress" style="height: 5px;">
+                            <div class="progress-bar" role="progressbar" 
+                                 style="width: @((usage.Usage.DocumentCount * 100.0 / usage.Limits.Documents))%"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card">
+                    <div class="card-body">
+                        <h6 class="text-muted">Queries This Month</h6>
+                        <h3>@usage.Usage.QueryCount / @usage.Limits.Queries</h3>
+                        <div class="progress" style="height: 5px;">
+                            <div class="progress-bar" role="progressbar" 
+                                 style="width: @((usage.Usage.QueryCount * 100.0 / usage.Limits.Queries))%"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card">
+                    <div class="card-body">
+                        <h6 class="text-muted">Plan</h6>
+                        <h3 class="text-capitalize">@usage.Plan</h3>
+                        <small class="text-muted">Status: @usage.Status</small>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card">
+                    <div class="card-body">
+                        <h6 class="text-muted">Overage Charges</h6>
+                        <h3>$@usage.Usage.OverageCharges.ToString("F2")</h3>
+                        <small class="text-muted">@usage.Usage.OverageQueries overage queries</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+
+    <!-- Documents Table -->
+    <div class="card">
+        <div class="card-body">
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>Filename</th>
+                        <th>Status</th>
+                        <th>Chunks</th>
+                        <th>Size</th>
+                        <th>Uploaded</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (documents != null && documents.Any())
+                    {
+                        @foreach (var doc in documents)
+                        {
+                            <tr>
+                                <td>
+                                    <i class="bi bi-file-earmark-text"></i>
+                                    @doc.Filename
+                                </td>
+                                <td>
+                                    @switch (doc.Status)
+                                    {
+                                        case DocumentStatus.Completed:
+                                            <span class="badge bg-success">Completed</span>
+                                            break;
+                                        case DocumentStatus.Processing:
+                                            <span class="badge bg-warning">Processing</span>
+                                            break;
+                                        case DocumentStatus.Failed:
+                                            <span class="badge bg-danger">Failed</span>
+                                            break;
+                                        default:
+                                            <span class="badge bg-secondary">Pending</span>
+                                            break;
+                                    }
+                                </td>
+                                <td>@(doc.ChunkCount?.ToString() ?? "-")</td>
+                                <td>@FormatBytes(doc.SizeBytes)</td>
+                                <td>@doc.UploadedAt.ToString("MMM dd, yyyy")</td>
+                                <td>
+                                    <form method="post" action="@Url.Action("Delete")" style="display: inline;">
+                                        @Html.AntiForgeryToken()
+                                        <input type="hidden" name="documentId" value="@doc.DocumentId" />
+                                        <button type="submit" class="btn btn-sm btn-danger" 
+                                                onclick="return confirm('Are you sure you want to delete this document?');">
+                                            <i class="bi bi-trash"></i>
+                                        </button>
+                                    </form>
+                                </td>
+                            </tr>
+                        }
+                    }
+                    else
+                    {
+                        <tr>
+                            <td colspan="6" class="text-center text-muted py-4">
+                                No documents uploaded yet. <a href="@Url.Action("Upload")">Upload your first document</a>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+@functions {
+    string FormatBytes(long bytes)
+    {
+        string[] sizes = { "B", "KB", "MB", "GB" };
+        double len = bytes;
+        int order = 0;
+        while (len >= 1024 && order < sizes.Length - 1)
+        {
+            order++;
+            len = len / 1024;
+        }
+        return $"{len:0.##} {sizes[order]}";
+    }
+}
+
+

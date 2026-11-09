@@ -1,0 +1,22 @@
+{
+  "name": "bacevector-ingestion",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "wrangler dev --remote --experimental-vectorize-bind-to-prod",
+    "build": "esbuild src/index.ts --bundle --format=esm --outfile=dist/index.mjs --platform=browser",
+    "deploy": "wrangler deploy"
+  },
+  "dependencies": {
+    "@cloudflare/workers-types": "^4.20241018.0",
+    "bcryptjs": "^3.0.3",
+    "esbuild": "^0.27.0",
+    "itty-router": "^4.0.24"
+  },
+  "devDependencies": {
+    "tsup": "^8.1.0",
+    "typescript": "^5.5.4",
+    "wrangler": "^3.75.0"
+  }
+}

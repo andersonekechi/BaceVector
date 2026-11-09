@@ -1,0 +1,106 @@
+name: Deploy Workers
+
+on:
+  push:
+    branches:
+      - main
+      - staging
+    paths:
+      - 'src/workers/**'
+      - '.github/workflows/deploy-workers.yml'
+  workflow_dispatch:
+
+jobs:
+  deploy-ingestion:
+    name: Deploy Ingestion Worker
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: src/workers/ingestion/package-lock.json
+      
+      - name: Install dependencies
+        working-directory: src/workers/ingestion
+        run: npm ci
+      
+      - name: Deploy to Staging
+        if: github.ref == 'refs/heads/staging'
+        working-directory: src/workers/ingestion
+        run: npx wrangler deploy --env staging
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      
+      - name: Deploy to Production
+        if: github.ref == 'refs/heads/main'
+        working-directory: src/workers/ingestion
+        run: npx wrangler deploy --env production
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+
+  deploy-query:
+    name: Deploy Query Worker
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: src/workers/query/package-lock.json
+      
+      - name: Install dependencies
+        working-directory: src/workers/query
+        run: npm ci
+      
+      - name: Deploy to Staging
+        if: github.ref == 'refs/heads/staging'
+        working-directory: src/workers/query
+        run: npx wrangler deploy --env staging
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      
+      - name: Deploy to Production
+        if: github.ref == 'refs/heads/main'
+        working-directory: src/workers/query
+        run: npx wrangler deploy --env production
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+
+  deploy-admin:
+    name: Deploy Admin Worker
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: src/workers/admin/package-lock.json
+      
+      - name: Install dependencies
+        working-directory: src/workers/admin
+        run: npm ci
+      
+      - name: Deploy to Staging
+        if: github.ref == 'refs/heads/staging'
+        working-directory: src/workers/admin
+        run: npx wrangler deploy --env staging
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      
+      - name: Deploy to Production
+        if: github.ref == 'refs/heads/main'
+        working-directory: src/workers/admin
+        run: npx wrangler deploy --env production
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+

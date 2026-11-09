@@ -1,0 +1,63 @@
+@{
+    ViewData["Title"] = "Upload Document";
+}
+
+<div class="container py-4">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header">
+                    <h2>Upload Document</h2>
+                </div>
+                <div class="card-body">
+                    @if (!ViewData.ModelState.IsValid)
+                    {
+                        <div class="alert alert-danger">
+                            @Html.ValidationSummary(false, "", new { @class = "text-danger" })
+                        </div>
+                    }
+
+                    <form method="post" enctype="multipart/form-data" asp-action="Upload">
+                        @Html.AntiForgeryToken()
+
+                        <div class="mb-3">
+                            <label for="file" class="form-label">Select File</label>
+                            <input type="file" class="form-control" id="file" name="file" required 
+                                   accept=".txt,.md,.pdf,.doc,.docx" />
+                            <div class="form-text">
+                                Supported formats: TXT, Markdown, PDF, Word (DOC/DOCX). Max size: 50MB.
+                            </div>
+                        </div>
+
+                        <div class="alert alert-info">
+                            <i class="bi bi-info-circle"></i>
+                            <strong>Processing Time:</strong> Documents are processed asynchronously. 
+                            Large documents may take a few minutes to be fully indexed and searchable.
+                        </div>
+
+                        <div class="d-flex justify-content-between">
+                            <a href="@Url.Action("Index")" class="btn btn-secondary">
+                                <i class="bi bi-arrow-left"></i> Back to Library
+                            </a>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="bi bi-upload"></i> Upload Document
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <div class="mt-4">
+                <h4>Tips for Best Results</h4>
+                <ul>
+                    <li>Use clear, well-structured documents with proper headings</li>
+                    <li>Plain text and Markdown files process fastest</li>
+                    <li>Break very large documents into logical sections</li>
+                    <li>Include relevant metadata in document titles</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+

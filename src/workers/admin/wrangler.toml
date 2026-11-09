@@ -1,0 +1,31 @@
+name = "bacevector-admin"
+main = "src/index.ts"
+compatibility_date = "2024-11-01"
+
+[env.production]
+name = "bacevector-admin-prod"
+
+[env.staging]
+name = "bacevector-admin-staging"
+
+# D1 Database binding for tenant/usage data
+[[d1_databases]]
+binding = "DB"
+database_name = "bacevector-db"
+database_id = "27c29996-b885-4f56-9d09-85b3c78adc3f"
+
+# KV namespace for caching and rate limiting
+[[kv_namespaces]]
+binding = "CACHE"
+id = "9430ac604ff34c0a9d6a60d0efd38a65"
+preview_id = "25585e2bc677432ab1120fa55b28f741"
+
+# Environment variables
+[vars]
+STRIPE_WEBHOOK_SECRET = ""
+BASE_PLAN_LIMIT_DOCS = "100"
+BASE_PLAN_LIMIT_QUERIES = "5000"
+PRO_PLAN_LIMIT_DOCS = "500"
+PRO_PLAN_LIMIT_QUERIES = "20000"
+OVERAGE_RATE_PER_QUERY = "0.01"
+

@@ -1,0 +1,22 @@
+{
+  "name": "bacevector-query",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "esbuild src/index.ts --bundle --format=esm --outfile=dist/index.mjs --platform=browser",
+    "dev": "wrangler dev --remote --experimental-vectorize-bind-to-prod",
+    "deploy": "wrangler deploy",
+    "deploy:staging": "wrangler deploy --env staging",
+    "deploy:production": "wrangler deploy --env production"
+  },
+  "dependencies": {
+    "itty-router": "^4.0.24"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^4.20241127.0",
+    "esbuild": "^0.19.12",
+    "typescript": "^5.7.2",
+    "wrangler": "^3.90.0"
+  }
+}
